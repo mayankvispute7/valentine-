@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Be My Valentine? ❤️</title>
+
+  <!-- External Libraries -->
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #ff4d7d;
+      --primary-hover: #ff1f68;
+      --bg-gradient: linear-gradient(135deg, #fce4ec 0%, #ffebee 100%);
+      --glass: rgba(255, 255, 255, 0.85);
+      --text-dark: #4a1c2c;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-gradient);
+      font-family: 'Quicksand', sans-serif;
+      overflow: hidden;
+    }
+
+    .bg-elements {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .floating-heart {
+      position: absolute;
+      color: var(--primary);
+      opacity: 0.15;
+      font-size: 20px;
+    }
+
+    /* Main Container */
+    .container {
+      position: relative;
+      z-index: 10;
+      width: min(600px, 94vw);
+      min-height: 550px;
+      padding: 60px 30px;
+      background: var(--glass);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 2px solid white;
+      border-radius: 40px;
+      text-align: center;
+      box-shadow: 0 40px 80px -20px rgba(255, 77, 125, 0.25);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .visual-wrapper {
+      width: 170px;
+      height: 170px;
+      margin-bottom: 20px;
+      background: white;
+      border-radius: 50%;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+      z-index: 5;
+    }
+
+    .visual-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    h1 {
+      font-family: 'Pacifico', cursive;
+      color: var(--text-dark);
+      font-size: clamp(2rem, 8vw, 2.8rem);
+      margin-bottom: 30px;
+      z-index: 5;
+    }
+
+    .action-zone {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      align-items: center;
+      min-height: 150px;
+      width: 100%;
+      z-index: 5;
+    }
+
+    .btn {
+      padding: 18px 45px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    #yesBtn {
+      background: var(--primary);
+      color: white;
+      position: relative;
+      z-index: 100;
+    }
+
+    #noBtn {
+      background: #f3f4f6;
+      color: #6b7280;
+      position: relative; /* Starts as relative, becomes absolute on first move */
+      z-index: 50;
+    }
+
+    /* Sad Sticker Style */
+    .sad-sticker {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      pointer-events: none;
+      z-index: 2; /* Behind text and buttons */
+      opacity: 0;
+      border-radius: 15px;
+      object-fit: contain;
+    }
+
+    /* Success/Letter Views */
+    #success-view, #letter-view {
+      display: none;
+      z-index: 10;
+      width: 100%;
+    }
+
+    .success-title {
+      font-family: 'Pacifico', cursive;
+      color: var(--primary);
+      font-size: 3.5rem;
+      margin-bottom: 20px;
+    }
+
+    .letter-content {
+      font-size: 1.15rem;
+      line-height: 1.7;
+      color: var(--text-dark);
+      text-align: left;
+      padding: 25px;
+      background: rgba(255, 255, 255, 0.6);
+      border-left: 5px solid var(--primary);
+      border-radius: 12px;
+      margin-top: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 3px;
+      height: 1.2em;
+      background: var(--primary);
+      margin-left: 2px;
+      animation: blink 0.8s infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .pulse {
+      animation: heartbeat 1s infinite alternate;
+    }
+
+    @keyframes heartbeat {
+      to { transform: scale(1.1); }
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 40px 20px; min-height: 550px; }
+      .btn { padding: 15px 30px; font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-elements" id="bgLayer"></div>
+
+  <main class="container" id="mainCard">
+    <!-- Question View -->
+    <div id="question-view" style="width: 100%;">
+      <div class="visual-wrapper" style="margin: 0 auto 20px;">
+        <img src="1.gif" alt="Pleading Character">
+      </div>
+      <h1>Will you be my Valentine?</h1>
+      
+      <div class="action-zone" id="btnArea">
+        <button id="yesBtn" class="btn pulse">Yes</button>
+        <button id="noBtn" class="btn">No</button>
+      </div>
+    </div>
+
+    <!-- Success View -->
+    <div id="success-view">
+      <div class="visual-wrapper" style="margin: 0 auto 20px;">
+        <img src="2.gif" alt="Happy Celebration">
+      </div>
+      <h2 class="success-title">YAY! ❤️</h2>
+      <button class="btn" style="background: white; color: var(--primary); border: 2px solid var(--primary); margin-top: 10px;" id="openLetterBtn">Read My Letter ✉️</button>
+    </div>
+
+    <!-- Letter View -->
+    <div id="letter-view">
+      <h2 style="font-family: 'Pacifico'; color: var(--primary); margin-bottom: 15px;">To My Favorite Person,</h2>
+      <div class="letter-content">
+        <span id="typewriter"></span><span class="cursor"></span>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const noBtn = document.getElementById('noBtn');
+    const yesBtn = document.getElementById('yesBtn');
+    const mainCard = document.getElementById('mainCard');
+    const questionView = document.getElementById('question-view');
+    const successView = document.getElementById('success-view');
+    const letterView = document.getElementById('letter-view');
+    const openLetterBtn = document.getElementById('openLetterBtn');
+    const bgLayer = document.getElementById('bgLayer');
+
+    const sadStickers = [
+      "3.gif",
+      "6.gif",
+      "7.gif",
+      "4.gif"
+    ];
+
+    const rejectionTexts = [
+      "Are you sure?", "Think again!", "Pleease?", "Don't do this!",
+      "I'm crying!", "Calculated mistake!", "Click Yes!"
+    ];
+    
+    let noInteractions = 0;
+
+    // Create background hearts
+    function initHearts() {
+      for (let i = 0; i < 25; i++) {
+        const heart = document.createElement('div');
+        heart.className = 'floating-heart';
+        heart.innerHTML = '❤️';
+        heart.style.left = Math.random() * 100 + 'vw';
+        heart.style.top = '110vh';
+        bgLayer.appendChild(heart);
+        gsap.to(heart, {
+          y: '-120vh', x: (Math.random() - 0.5) * 150, rotation: Math.random() * 360,
+          duration: 10 + Math.random() * 10, repeat: -1, ease: "none", opacity: 0.2
+        });
+      }
+    }
+
+    // Show a sad sticker at random location inside the card
+    function showSticker() {
+      const img = document.createElement('img');
+      img.src = sadStickers[Math.floor(Math.random() * sadStickers.length)];
+      img.className = 'sad-sticker';
+      
+      const padding = 40;
+      const x = Math.random() * (mainCard.clientWidth - 120 - padding * 2) + padding;
+      const y = Math.random() * (mainCard.clientHeight - 120 - padding * 2) + padding;
+      
+      img.style.left = `${x}px`;
+      img.style.top = `${y}px`;
+      
+      mainCard.appendChild(img);
+
+      gsap.fromTo(img, 
+        { opacity: 0, scale: 0.5 },
+        { opacity: 0.8, scale: 1, duration: 0.4, 
+          onComplete: () => {
+            gsap.to(img, { opacity: 0, scale: 0.8, delay: 1.2, duration: 0.4, onComplete: () => img.remove() });
+          }
+        }
+      );
+    }
+
+    // Move "No" button strictly inside the card
+    function moveNo() {
+      noInteractions++;
+      showSticker();
+
+      // Ensure button is absolute for free movement
+      noBtn.style.position = 'absolute';
+
+      const padding = 20;
+      // Max coordinates based on the container size
+      const maxX = mainCard.clientWidth - noBtn.offsetWidth - padding;
+      const maxY = mainCard.clientHeight - noBtn.offsetHeight - padding;
+
+      const randomX = Math.max(padding, Math.random() * maxX);
+      const randomY = Math.max(padding, Math.random() * maxY);
+
+      noBtn.innerText = rejectionTexts[Math.min(noInteractions - 1, rejectionTexts.length - 1)];
+
+      gsap.to(noBtn, {
+        left: randomX,
+        top: randomY,
+        duration: 0.3,
+        ease: "power2.out"
+      });
+
+      // Grow Yes button
+      gsap.to(yesBtn, {
+        scale: 1 + (noInteractions * 0.2),
+        duration: 0.3
+      });
+    }
+
+    noBtn.addEventListener('mouseover', moveNo);
+    noBtn.addEventListener('click', moveNo);
+    noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveNo(); });
+
+    yesBtn.addEventListener('click', () => {
+      gsap.to(questionView, {
+        opacity: 0, scale: 0.8, duration: 0.5,
+        onComplete: () => {
+          questionView.style.display = 'none';
+          successView.style.display = 'block';
+          gsap.fromTo(successView, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6 });
+          confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+        }
+      });
+    });
+
+    const letterContent = "Every moment spent with you feels like a page from a fairytale. Your smile lights up my world in ways I can't describe, and your kindness makes me want to be a better person every single day.\n\nI promise to always be the one who makes you laugh, the one who holds you tight, and the one who loves you more with every heartbeat. You aren't just my Valentine; you're my everything.\n\nYours forever, ❤️";
+
+    function typeWriter(text, i) {
+      if (i < text.length) {
+        document.getElementById("typewriter").innerHTML = text.substring(0, i + 1);
+        setTimeout(() => typeWriter(text, i + 1), 35);
+      }
+    }
+
+    openLetterBtn.addEventListener('click', () => {
+      gsap.to(successView, {
+        opacity: 0, y: -20, duration: 0.4,
+        onComplete: () => {
+          successView.style.display = 'none';
+          letterView.style.display = 'block';
+          typeWriter(letterContent, 0);
+        }
+      });
+    });
+
+    window.onload = () => {
+      initHearts();
+      gsap.from(".container", { opacity: 0, scale: 0.9, duration: 1, ease: "back.out(1.4)" });
+    };
+  </script>
+</body>
+</html>
